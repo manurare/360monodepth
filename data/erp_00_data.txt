@@ -1,0 +1,1 @@
+../../../data/erp_00/0001_rgb.jpg ../../../data/erp_00/0001_depth.dpt
