@@ -10,7 +10,7 @@ This is the code for [360MonoDepth: High-Resolution 360° Monocular Depth Estima
  University of Bath  
   \*denotes equal contribution  
  __CVPR 2022__
-<img src='/doc/images/pipeline.jpg'/>
+<img src='imgs/pipeline.jpg'/>
 
 ## Setup
 
