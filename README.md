@@ -3,12 +3,13 @@
 
 This is the code for [360MonoDepth: High-Resolution 360° Monocular Depth Estimation](https://arxiv.org/abs/2111.15669)
  
- [Manuel Rey-Area](https://manurare.github.io/)\*<sup>1</sup>,
- [Mingze Yuan](https://yuanmingze.github.io/)\*<sup>1</sup>,
- [Christian Richardt](https://richardt.name/)<sup>1</sup> <br>
- <sup>1</sup>University of Bath  
-  \*denotes equal contribution  
 
+ [Manuel Rey-Area](https://manurare.github.io/)\*,
+ [Mingze Yuan](https://yuanmingze.github.io/)\*,
+ [Christian Richardt](https://richardt.name/) <br>
+ University of Bath  
+  \*denotes equal contribution  
+ __CVPR 2022__
 <img src='/doc/images/pipeline.jpg'/>
 
 ## Setup
@@ -17,25 +18,26 @@ Tested with Python >= 3.8
 
 
 Dependencies for C++ code:
- * Ceres
- * Eigen
- * Glog
- * Gflags
- * GTest
- * OpenCV
- * Boost
- * pybind11
+ * Ceres 2.0.0
+ * Eigen 3.3.9
+ * Glog 0.5.0
+ * Gflags 2.2.2
+ * GTest 1.10.0
+ * OpenCV 4.2.0
+ * Boost 1.75.0
+ * pybind11 2.8.1
 
 Dependencies for python are in ```code/python/requirements.txt```
 
 
-__With Docker__: We recommend Docker to run 360MonoDepth to avoid problems with dependencies.
+#### With Docker 
+We recommend Docker to run 360MonoDepth to avoid problems with dependencies.
 ```
 docker build -t 360monodepth .
 docker run -it --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 360monodepth "cd /monodepth/python/src; python main.py --expname test_experiment --blending_method all --grid_size 8x7"
 ```
 
-__Without Docker__: 
+#### Without Docker 
 1. We need to create a conda environment with python 3.8 and build the C++ targets
 
  

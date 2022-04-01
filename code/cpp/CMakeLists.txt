@@ -10,7 +10,7 @@ set(LINUX TRUE)
 endif()
 
 # include 3rd libraries path
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmakeconfig.txt)
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeConfig.txt)
 message("OS: ${CMAKE_SYSTEM_NAME}")
 message("Generated with config types: ${CMAKE_BUILD_TYPE}")
 
