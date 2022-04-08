@@ -1,4 +1,3 @@
-import test.configuration as config
 from utility import fs_utility
 from utility.fs_utility import FileNameConvention
 # import matplotlib
@@ -18,6 +17,7 @@ from utility import depthmap_utils, metrics
 from utility import blending
 from utility import serialization
 from utility import projection_icosahedron as proj_ico
+from utility import MAIN_DATA_DIR
 
 from utility.logger import Logger
 
@@ -410,9 +410,9 @@ def monodepth_360(opt):
     """Pipeline."""
     # 0) settting parameters
     # 0-0) data file name and folder
-    output_folder = os.path.join(Path(config.MAIN_DATA_DIR).parent.absolute(), "results/{}".format(opt.expname))
+    output_folder = os.path.join(Path(MAIN_DATA_DIR).parent.absolute(), "results/{}".format(opt.expname))
     output_results_file = os.path.join(output_folder, "{}.txt".format(opt.expname))
-    Path(output_folder).mkdir(exist_ok=True)
+    Path(output_folder).mkdir(exist_ok=True, parents=True)
 
     with open(opt.data_fns, 'r') as f:
         data_fns = f.readlines()
