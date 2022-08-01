@@ -121,7 +121,7 @@ public:
 
 	// depth map's sub map filename regular expression
 	int index_digit_number = 3;
-	std::string depthmap_filename_regexp = "[a-zA-Z0-9\\_]*\\_depth\\_[0-9]{3}.pfm";
+	std::string depthmap_filename_regexp = "[a-zA-Z0-9\\_]*\\_disp\\_erp\\_[0-9]{3}.pfm";
 	std::string rgb_filename_regexp = "[a-zA-Z0-9\\_]*\\_rgb\\_[0-9]{3}.jpg";
 	std::string corr_filename_regexp = "[a-zA-Z0-9\\_]*\\_corr\\_[0-9]{3}\\_[0-9]{3}.json";
 	// pixels corresponding filename regular expression

@@ -122,9 +122,9 @@ void DepthmapStitcher::load_data(const std::string& data_root_dir, const std::ve
 		intidx2extidx[index] = depthmap_extindex;
 	}
 	smatch m_prefixs;
-	regex_search(depthmap_filename_list[0], m_prefixs, std::regex("[a-zA-Z0-9]*_rgb"));
+	regex_search(depthmap_filename_list[0], m_prefixs, std::regex("[a-zA-Z0-9\\_]*\\_disp"));
 	std::string prefix = m_prefixs[0].str();
-	filename_prefix = prefix.substr(0, prefix.length());
+	filename_prefix = prefix.substr(0, prefix.length()-5);
 	LOG(INFO) << "File name prefix is " << filename_prefix;
 
 	// 1) load the pixel corresponding relationship

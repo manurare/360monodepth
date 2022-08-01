@@ -33,7 +33,7 @@ class BlendIt:
         # sub-image number
         self.fidelity_weight = 1.0
         self.inflection_point = 10  # point where slope starts to affect the radial blendweights
-        self.diagonal_percentage = 30  # Percentage of diagonal until weights start decaying in frustum weights
+        self.diagonal_percentage = 48.5  # Percentage of diagonal until weights start decaying in frustum weights
         self.n_subimages = n_subimages
         self.blending_method = blending_method
         self.padding = padding
@@ -153,23 +153,19 @@ class BlendIt:
                                                                 erp_image_height, sph_modulo=False)
 
             # process the image boundary
-            erp_image_col_start = int(erp_image_col_start) if int(erp_image_col_start) > 0 else int(
-                erp_image_col_start - 0.5)
-            erp_image_col_stop = int(erp_image_col_stop + 0.5) if int(erp_image_col_stop) > 0 else int(
-                erp_image_col_stop)
-            erp_image_row_start = int(erp_image_row_start) if int(erp_image_row_start) > 0 else int(
-                erp_image_row_start - 0.5)
-            erp_image_row_stop = int(erp_image_row_stop + 0.5) if int(erp_image_row_stop) > 0 else int(
-                erp_image_row_stop)
+            erp_image_col_start = int(erp_image_col_start + 0.5)
+            erp_image_col_stop = int(erp_image_col_stop + 0.5)
+            erp_image_row_start = int(erp_image_row_start + 0.5)
+            erp_image_row_stop = int(erp_image_row_stop + 0.5)
 
             triangle_x_range = np.linspace(erp_image_col_start, erp_image_col_stop,
-                                           erp_image_col_stop - erp_image_col_start + 1)
+                                           erp_image_col_stop - erp_image_col_start, endpoint=False)
             triangle_y_range = np.linspace(erp_image_row_start, erp_image_row_stop,
-                                           erp_image_row_stop - erp_image_row_start + 1)
+                                           erp_image_row_stop - erp_image_row_start, endpoint=False)
             triangle_xv, triangle_yv = np.meshgrid(triangle_x_range, triangle_y_range)
             # process the wrap around
             triangle_xv = np.remainder(triangle_xv, erp_image_width)
-            triangle_yv = np.remainder(triangle_yv, erp_image_height)
+            triangle_yv = np.clip(triangle_yv, 0, erp_image_height - 1)
 
             # 2) sample the pixel value from tanget image
             # project spherical coordinate to tangent plane
@@ -328,29 +324,6 @@ class BlendIt:
         height, width = size
         weight_matrix = np.zeros((height, width), dtype=np.float)
 
-        # Line in the form x = o + td. Where o origin and d direction vector
-        if height == width:
-            origin = np.array([0., 0.])
-            dir_vector = np.array([height - origin[0], width - origin[1]])
-            top_left = (origin + self.diagonal_percentage / 100. * dir_vector).astype(np.int)
-            bottom_right = (origin + (1 - self.diagonal_percentage / 100.) * dir_vector).astype(np.int)
-            weight_matrix[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]] = 1.
-
-        # If the image is not squared then two lines of the form above are needed displaced in X at the center of the img
-        else:
-            # Both lines are supposed to have slope 1. The beginning of the bottom line is the end of the top line
-            # displaced (width/height) horizontally
-            tophalf_diag_line_origin = np.array([0., 0.])
-            tophalf_diag_line_dir = np.array([height//2, height//2]) - tophalf_diag_line_origin
-
-            bottomhalf_diag_line_origin = np.array([height//2, width/height*width*0.5])
-            bottomhalf_diag_line_dir = np.array([height, width]) - bottomhalf_diag_line_origin
-
-            top_left = (tophalf_diag_line_origin + 2 * self.diagonal_percentage / 100. * tophalf_diag_line_dir).astype(np.int)
-            bottom_right = (bottomhalf_diag_line_origin + (1 - (2 * self.diagonal_percentage / 100.)) *
-                            bottomhalf_diag_line_dir).astype(np.int)
-            weight_matrix[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]] = 1.
-
         x_list = np.linspace(0, width, width, endpoint=False)
         y_list = np.linspace(0, height, height, endpoint=False)
         grid_x, grid_y = np.meshgrid(x_list, y_list)
@@ -361,11 +334,20 @@ class BlendIt:
         dist_to_top    = grid_y
         dist_to_bottom = np.abs(grid_y - height)
 
+        # Build pyramid of distances
         total_dist = np.dstack((dist_to_right, dist_to_left, dist_to_top, dist_to_bottom))
         total_dist = np.min(total_dist, axis=2)
-        total_dist[np.where(weight_matrix != 0.)] = 0
         total_dist = (total_dist - np.min(total_dist)) / np.ptp(total_dist)
-        total_dist[np.where(weight_matrix != 0.)] = 1
+        peak_coors = np.where(total_dist == 1)
+        peak_top_left = np.array([np.min(peak_coors[0]), np.min(peak_coors[1])])
+        peak_bottom_right = np.array([np.max(peak_coors[0]), np.max(peak_coors[1])])
+
+        unit_dir = np.array([1/np.sqrt(2), 1/np.sqrt(2)])
+        top_left = (peak_top_left - 2*self.diagonal_percentage*unit_dir).astype(np.int)
+        bottom_right = (peak_bottom_right + 2*self.diagonal_percentage*unit_dir).astype(np.int)
+        total_dist[top_left[0]:bottom_right[0]+1, top_left[1]:bottom_right[1]+1] = 0
+        total_dist = (total_dist - np.min(total_dist)) / np.ptp(total_dist)
+        total_dist[top_left[0]:bottom_right[0] + 1, top_left[1]:bottom_right[1] + 1] = 1
         return total_dist
 
     def laplacian_matrix(self, n, m):

@@ -201,9 +201,12 @@ struct DepthmapStitcherGroup::ScaleResidual {
 		T sum_number(0);
 		for (int index = 0; index < grid_width_ * grid_height_; index++)
 		{
-			sum_number += 1.0 / scale_list[index];
+			sum_number += 1.0 / (scale_list[index] + T(1e-10));
 		}
 		residual[0] = sum_number;
+//      if (ceres::isinf(residual[0]) || ceres::isnan(residual[0])){
+//          printf("INFINITY SCALE\n");
+//      }
 		return true;
 	}
 
