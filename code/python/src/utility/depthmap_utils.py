@@ -348,6 +348,10 @@ def boosting_monodepth(rgb_image_data_list):
     opt = TestOptions()
     parser_pix2pix = argparse.ArgumentParser()
     parser_pix2pix = opt.initialize(parser_pix2pix)
+    # Remove arguments causing conflict with main arguments
+    parser_pix2pix.__dict__['_option_string_actions'].pop('--dataroot')
+    parser_pix2pix.__dict__['_option_string_actions'].pop('--dataset_mode')
+    parser_pix2pix.__dict__['_option_string_actions'].pop('--data_dir')
     opt = parser_pix2pix.parse_known_args()[0]
     opt.isTrain = False
     opt.gpu_ids = [0]
