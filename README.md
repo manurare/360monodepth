@@ -34,7 +34,7 @@ Dependencies for python are in ```code/python/requirements.txt```
 We recommend Docker to run 360MonoDepth to avoid problems with dependencies.
 ```
 docker build -t 360monodepth .
-docker run -it --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 360monodepth "cd /monodepth/python/src; python main.py --expname test_experiment --blending_method all --grid_size 8x7"
+docker run -it --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 360monodepth sh -c "cd /monodepth/python/src; python3 main.py --expname test_experiment --blending_method all --grid_size 8x7"
 ```
 
 #### Without Docker 
@@ -63,6 +63,12 @@ python setup.py build
 python setup.py bdist_wheel
 pip install code/cpp/python/dist/instaOmniDepth-0.1.0-cp38-cp38-linux_x86_64.whl
 ```
+
+*OPTIONAL*: To add support for BoostingMonocularDepth
+```
+git submodule update --init
+```
+And download the required weights as indicated in their [README](https://github.com/compphoto/BoostingMonocularDepth#setup). 
 
 ## Running code
 Always execute this command per new instance of shell. 
