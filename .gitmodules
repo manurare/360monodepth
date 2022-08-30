@@ -1,0 +1,3 @@
+[submodule "BoostingMonocularDepth"]
+	path = BoostingMonocularDepth
+	url = https://github.com/compphoto/BoostingMonocularDepth

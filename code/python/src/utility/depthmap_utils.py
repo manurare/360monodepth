@@ -166,6 +166,13 @@ def rgb2dispmap(image_filepath, pytorch_hub=True):
     return depthmap_data
 
 
+def run_persp_monodepth(rgb_image_data_list, persp_monodepth, use_large_model=True):
+    if (persp_monodepth == "midas2") or (persp_monodepth == "midas3"):
+        MiDaS_torch_hub_data(rgb_image_data_list, persp_monodepth, use_large_model=use_large_model)
+    if persp_monodepth == "boost":
+        boosting_monodepth(rgb_image_data_list)
+
+
 def MiDaS_torch_hub_data(rgb_image_data_list, persp_monodepth, use_large_model=True):
     """Estimation the single RGB image's depth with MiDaS downloading from Torch Hub.
     reference: https://pytorch.org/hub/intelisl_midas_v2/
