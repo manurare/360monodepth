@@ -325,6 +325,7 @@ def boosting_monodepth(rgb_image_data_list):
     currfile_dir = os.path.dirname(__file__)
     boost_path = f"{os.path.join(currfile_dir, os.pardir, os.pardir, os.pardir, os.pardir, 'BoostingMonocularDepth')}"
     sys.path.append(os.path.abspath(boost_path))
+    sys.path.append(os.path.abspath(os.path.dirname(boost_path)))
 
     # This import fixes relative imports in subfiles within BoostingMonocularDepth project
     sys.path.append(os.path.abspath(os.path.join(boost_path, "structuredrl", "models", "syncbn")))

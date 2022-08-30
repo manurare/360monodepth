@@ -22,6 +22,7 @@ RUN apt-get install --no-install-recommends \
          libceres-dev \
          python3-pybind11 \
          git \
+         wget \
          libboost1.71-dev  -y
 
 # 2) set up python module's build environment
@@ -33,7 +34,14 @@ RUN apt install --no-install-recommends \
 # Put everything in some subfolder
 WORKDIR "/monodepth"
 COPY . ./
+
+# Setup BoostingMonocularDepth
 RUN git submodule update --init
+RUN cd ./BoostingMonocularDepth/pix2pix/ && mkdir -p checkpoints/mergemodel
+# Midas weights
+RUN wget -P ./BoostingMonocularDepth/midas https://drive.google.com/file/d/1nqW_Hwj86kslfsXR7EnXpEWdO2csz1cC
+# Merge net weights
+RUN wget -P ./BoostingMonocularDepth/pix2pix/checkpoints/mergemodel https://sfu.ca/~yagiz/CVPR21/latest_net_G.pth
 
 RUN pip3 install -r ./code/python/requirements.txt
 
