@@ -39,9 +39,9 @@ COPY . ./
 RUN git submodule update --init
 RUN cd ./BoostingMonocularDepth/pix2pix/ && mkdir -p checkpoints/mergemodel
 # Midas weights
-RUN wget -P ./BoostingMonocularDepth/midas https://drive.google.com/file/d/1nqW_Hwj86kslfsXR7EnXpEWdO2csz1cC
+RUN wget https://github.com/isl-org/MiDaS/releases/download/v2_1/model-f6b98070.pt -O ./BoostingMonocularDepth/midas/model.pt
 # Merge net weights
-RUN wget -P ./BoostingMonocularDepth/pix2pix/checkpoints/mergemodel https://sfu.ca/~yagiz/CVPR21/latest_net_G.pth
+RUN wget -P ./BoostingMonocularDepth/pix2pix/checkpoints/mergemodel https://www.sfu.ca/~yagiz/CVPR21/latest_net_G.pth
 
 RUN pip3 install -r ./code/python/requirements.txt
 
