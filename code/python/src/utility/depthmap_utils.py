@@ -343,7 +343,7 @@ def boosting_monodepth(rgb_image_data_list):
     from BoostingMonocularDepth.pix2pix.models.pix2pix4depth_model import Pix2Pix4DepthModel
 
     # select device
-    device = torch.device("cpu")
+    device = torch.device("cuda")
     print("device: %s" % device)
 
     whole_size_threshold = 3000  # R_max from the paper
