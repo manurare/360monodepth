@@ -168,9 +168,9 @@ def rgb2dispmap(image_filepath, pytorch_hub=True):
 
 def run_persp_monodepth(rgb_image_data_list, persp_monodepth, use_large_model=True):
     if (persp_monodepth == "midas2") or (persp_monodepth == "midas3"):
-        MiDaS_torch_hub_data(rgb_image_data_list, persp_monodepth, use_large_model=use_large_model)
+        return MiDaS_torch_hub_data(rgb_image_data_list, persp_monodepth, use_large_model=use_large_model)
     if persp_monodepth == "boost":
-        boosting_monodepth(rgb_image_data_list)
+        return boosting_monodepth(rgb_image_data_list)
 
 
 def MiDaS_torch_hub_data(rgb_image_data_list, persp_monodepth, use_large_model=True):
@@ -292,6 +292,248 @@ def MiDaS_torch_hub_file(rgb_image_path, use_large_model=True):
     # plt.imshow(output)
     # plt.show()
     return output
+
+
+def boosting_monodepth(rgb_image_data_list):
+    # Load merge network
+    import cv2
+    import torch
+    import argparse
+    import warnings
+    warnings.simplefilter('ignore', np.RankWarning)
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--savepatchs', type=int, default=0, required=False,
+                        help='Activate to save the patch estimations')
+    parser.add_argument('--savewholeest', type=int, default=0, required=False,
+                        help='Activate to save the base estimations')
+    parser.add_argument('--output_resolution', type=int, default=1, required=False,
+                        help='0 for results in maximum resolution 1 for resize to input size')
+    parser.add_argument('--net_receptive_field_size', type=int, required=False)  # Do not set the value here
+    parser.add_argument('--pix2pixsize', type=int, default=1024, required=False)  # Do not change it
+    parser.add_argument('--depthNet', type=int, default=0, required=False,
+                        help='use to select different base depth networks 0:midas 1:strurturedRL 2:LeRes')
+    parser.add_argument('--colorize_results', action='store_true')
+    parser.add_argument('--R0', action='store_true')
+    parser.add_argument('--R20', action='store_true')
+    parser.add_argument('--Final', action='store_true')
+    parser.add_argument('--max_res', type=float, default=np.inf)
+
+    # Check for required input
+    option, _ = parser.parse_known_args()
+
+    currfile_dir = os.path.dirname(__file__)
+    boost_path = f"{os.path.join(currfile_dir, os.pardir, os.pardir, os.pardir, os.pardir, 'BoostingMonocularDepth')}"
+    sys.path.append(os.path.abspath(boost_path))
+
+    # This import fixes relative imports in subfiles within BoostingMonocularDepth project
+    sys.path.append(os.path.abspath(os.path.join(boost_path, "structuredrl", "models", "syncbn")))
+
+    import BoostingMonocularDepth.run
+
+    # OUR
+    from BoostingMonocularDepth.utils import ImageandPatchs, generatemask, calculateprocessingres
+
+    # MIDAS
+    import BoostingMonocularDepth.midas.utils
+    from BoostingMonocularDepth.midas.models.midas_net import MidasNet
+
+    # PIX2PIX : MERGE NET
+    from BoostingMonocularDepth.pix2pix.options.test_options import TestOptions
+    from BoostingMonocularDepth.pix2pix.models.pix2pix4depth_model import Pix2Pix4DepthModel
+
+    # select device
+    device = torch.device("cpu")
+    print("device: %s" % device)
+
+    whole_size_threshold = 3000  # R_max from the paper
+    GPU_threshold = 1600 - 32  # Limit for the GPU (NVIDIA RTX 2080), can be adjusted
+    opt = TestOptions().parse()
+    BoostingMonocularDepth.run.pix2pixmodel = Pix2Pix4DepthModel(opt)
+    BoostingMonocularDepth.run.pix2pixmodel.save_dir = os.path.join(boost_path, "pix2pix", "checkpoints", "mergemodel")
+    BoostingMonocularDepth.run.pix2pixmodel.load_networks('latest')
+    BoostingMonocularDepth.run.pix2pixmodel.eval()
+
+    # Decide which depth estimation network to load
+    if option.depthNet == 0:
+        option.net_receptive_field_size = 384
+        option.patch_netsize = 2 * option.net_receptive_field_size
+        midas_model_path = os.path.join(boost_path, "midas", "model.pt")
+        BoostingMonocularDepth.run.midasmodel = MidasNet(midas_model_path, non_negative=True)
+        BoostingMonocularDepth.run.midasmodel.to(device)
+        BoostingMonocularDepth.run.midasmodel.eval()
+
+    # Generate mask used to smoothly blend the local pathc estimations to the base estimate.
+    # It is arbitrarily large to avoid artifacts during rescaling for each crop.
+    mask_org = generatemask((3000, 3000))
+    mask = mask_org.copy()
+
+    # Value x of R_x defined in the section 5 of the main paper.
+    r_threshold_value = 0.2
+    if option.R0:
+        r_threshold_value = 0
+    elif option.R20:
+        r_threshold_value = 0.2
+
+    # Go through all images
+    depthmaps = []
+    print("start processing")
+    for image_ind, image in enumerate(rgb_image_data_list):
+        print('processing image', image_ind)
+
+        # Load image from dataset
+        img = image
+        input_resolution = img.shape
+
+        scale_threshold = 3  # Allows up-scaling with a scale up to 3
+
+        # Find the best input resolution R-x. The resolution search described in section 5-double estimation of the main paper and section B of the
+        # supplementary material.
+        whole_image_optimal_size, patch_scale = calculateprocessingres(img, option.net_receptive_field_size,
+                                                                       r_threshold_value, scale_threshold,
+                                                                       whole_size_threshold)
+
+        print('\t wholeImage being processed in :', whole_image_optimal_size)
+
+        # Generate the base estimate using the double estimation.
+        whole_estimate = BoostingMonocularDepth.run.doubleestimate(img, option.net_receptive_field_size,
+                                                                   whole_image_optimal_size, option.pix2pixsize,
+                                                                   option.depthNet)
+
+        # Compute the multiplier described in section 6 of the main paper to make sure our initial patch can select
+        # small high-density regions of the image.
+        BoostingMonocularDepth.run.factor = max(min(1, 4 * patch_scale * whole_image_optimal_size / whole_size_threshold), 0.2)
+        factor = BoostingMonocularDepth.run.factor
+        print('Adjust factor is:', 1 / factor)
+
+        # Check if Local boosting is beneficial.
+        if option.max_res < whole_image_optimal_size:
+            print("No Local boosting. Specified Max Res is smaller than R20")
+            continue
+
+        # Compute the default target resolution.
+        if img.shape[0] > img.shape[1]:
+            a = 2 * whole_image_optimal_size
+            b = round(2 * whole_image_optimal_size * img.shape[1] / img.shape[0])
+        else:
+            a = round(2 * whole_image_optimal_size * img.shape[0] / img.shape[1])
+            b = 2 * whole_image_optimal_size
+        b = int(round(b / factor))
+        a = int(round(a / factor))
+
+        # recompute a, b and saturate to max res.
+        if max(a, b) > option.max_res:
+            print('Default Res is higher than max-res: Reducing final resolution')
+            if img.shape[0] > img.shape[1]:
+                a = option.max_res
+                b = round(option.max_res * img.shape[1] / img.shape[0])
+            else:
+                a = round(option.max_res * img.shape[0] / img.shape[1])
+                b = option.max_res
+            b = int(b)
+            a = int(a)
+
+        img = cv2.resize(img, (b, a), interpolation=cv2.INTER_CUBIC)
+
+        # Extract selected patches for local refinement
+        base_size = option.net_receptive_field_size * 2
+        patchset = BoostingMonocularDepth.run.generatepatchs(img, base_size)
+
+        print('Target resolution: ', img.shape)
+
+        # Computing a scale in case user prompted to generate the results as the same resolution of the input.
+        # Notice that our method output resolution is independent of the input resolution and this parameter will only
+        # enable a scaling operation during the local patch merge implementation to generate results with the same resolution
+        # as the input.
+        if option.output_resolution == 1:
+            mergein_scale = input_resolution[0] / img.shape[0]
+            print('Dynamicly change merged-in resolution; scale:', mergein_scale)
+        else:
+            mergein_scale = 1
+
+        imageandpatchs = ImageandPatchs(None, None, patchset, img, mergein_scale)
+        whole_estimate_resized = cv2.resize(whole_estimate, (round(img.shape[1] * mergein_scale),
+                                                             round(img.shape[0] * mergein_scale)),
+                                            interpolation=cv2.INTER_CUBIC)
+        imageandpatchs.set_base_estimate(whole_estimate_resized.copy())
+        imageandpatchs.set_updated_estimate(whole_estimate_resized.copy())
+
+        print('\t Resulted depthmap res will be :', whole_estimate_resized.shape[:2])
+        print('patchs to process: ' + str(len(imageandpatchs)))
+
+        # Enumerate through all patches, generate their estimations and refining the base estimate.
+        for patch_ind in range(len(imageandpatchs)):
+
+            # Get patch information
+            patch = imageandpatchs[patch_ind]  # patch object
+            patch_rgb = patch['patch_rgb']  # rgb patch
+            patch_whole_estimate_base = patch['patch_whole_estimate_base']  # corresponding patch from base
+            rect = patch['rect']  # patch size and location
+            patch_id = patch['id']  # patch ID
+            org_size = patch_whole_estimate_base.shape  # the original size from the unscaled input
+            print('\t processing patch', patch_ind, '|', rect)
+
+            # We apply double estimation for patches. The high resolution value is fixed to twice the receptive
+            # field size of the network for patches to accelerate the process.
+            patch_estimation = BoostingMonocularDepth.run.doubleestimate(patch_rgb, option.net_receptive_field_size,
+                                                                         option.patch_netsize, option.pix2pixsize,
+                                                                         option.depthNet)
+
+            # Output patch estimation if required
+            patch_estimation = cv2.resize(patch_estimation, (option.pix2pixsize, option.pix2pixsize),
+                                          interpolation=cv2.INTER_CUBIC)
+
+            patch_whole_estimate_base = cv2.resize(patch_whole_estimate_base, (option.pix2pixsize, option.pix2pixsize),
+                                                   interpolation=cv2.INTER_CUBIC)
+
+            # Merging the patch estimation into the base estimate using our merge network:
+            # We feed the patch estimation and the same region from the updated base estimate to the merge network
+            # to generate the target estimate for the corresponding region.
+            BoostingMonocularDepth.run.pix2pixmodel.set_input(patch_whole_estimate_base, patch_estimation)
+
+            # Run merging network
+            BoostingMonocularDepth.run.pix2pixmodel.test()
+            visuals = BoostingMonocularDepth.run.pix2pixmodel.get_current_visuals()
+
+            prediction_mapped = visuals['fake_B']
+            prediction_mapped = (prediction_mapped + 1) / 2
+            prediction_mapped = prediction_mapped.squeeze().cpu().numpy()
+
+            mapped = prediction_mapped
+
+            # We use a simple linear polynomial to make sure the result of the merge network would match the values of
+            # base estimate
+            p_coef = np.polyfit(mapped.reshape(-1), patch_whole_estimate_base.reshape(-1), deg=1)
+            merged = np.polyval(p_coef, mapped.reshape(-1)).reshape(mapped.shape)
+
+            merged = cv2.resize(merged, (org_size[1], org_size[0]), interpolation=cv2.INTER_CUBIC)
+
+            # Get patch size and location
+            w1 = rect[0]
+            h1 = rect[1]
+            w2 = w1 + rect[2]
+            h2 = h1 + rect[3]
+
+            # To speed up the implementation, we only generate the Gaussian mask once with a sufficiently large size
+            # and resize it to our needed size while merging the patches.
+            if mask.shape != org_size:
+                mask = cv2.resize(mask_org, (org_size[1], org_size[0]), interpolation=cv2.INTER_LINEAR)
+
+            tobemergedto = imageandpatchs.estimation_updated_image
+
+            # Update the whole estimation:
+            # We use a simple Gaussian mask to blend the merged patch region with the base estimate to ensure seamless
+            # blending at the boundaries of the patch region.
+            tobemergedto[h1:h2, w1:w2] = np.multiply(tobemergedto[h1:h2, w1:w2], 1 - mask) + np.multiply(merged, mask)
+            imageandpatchs.set_updated_estimate(tobemergedto)
+
+        # Output the result
+        output = cv2.resize(imageandpatchs.estimation_updated_image,
+                            (input_resolution[1], input_resolution[0]),
+                            interpolation=cv2.INTER_CUBIC)
+        depthmaps.append(output)
+
+    return depthmaps
 
 
 def read_dpt(dpt_file_path):
