@@ -297,30 +297,21 @@ def MiDaS_torch_hub_file(rgb_image_path, use_large_model=True):
 def boosting_monodepth(rgb_image_data_list):
     # Load merge network
     import cv2
-    import torch
     import argparse
+    import torch
     import warnings
     warnings.simplefilter('ignore', np.RankWarning)
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--savepatchs', type=int, default=0, required=False,
-                        help='Activate to save the patch estimations')
-    parser.add_argument('--savewholeest', type=int, default=0, required=False,
-                        help='Activate to save the base estimations')
-    parser.add_argument('--output_resolution', type=int, default=1, required=False,
-                        help='0 for results in maximum resolution 1 for resize to input size')
-    parser.add_argument('--net_receptive_field_size', type=int, required=False)  # Do not set the value here
-    parser.add_argument('--pix2pixsize', type=int, default=1024, required=False)  # Do not change it
-    parser.add_argument('--depthNet', type=int, default=0, required=False,
-                        help='use to select different base depth networks 0:midas 1:strurturedRL 2:LeRes')
-    parser.add_argument('--colorize_results', action='store_true')
-    parser.add_argument('--R0', action='store_true')
-    parser.add_argument('--R20', action='store_true')
-    parser.add_argument('--Final', action='store_true')
-    parser.add_argument('--max_res', type=float, default=np.inf)
+    class Object(object):
+        pass
 
-    # Check for required input
-    option, _ = parser.parse_known_args()
+    option = Object()
+    option.R0 = False
+    option.R20 = False
+    option.output_resolution = 1
+    option.pix2pixsize = 1024
+    option.depthNet = 0
+    option.max_res = np.Inf
 
     currfile_dir = os.path.dirname(__file__)
     boost_path = f"{os.path.join(currfile_dir, os.pardir, os.pardir, os.pardir, os.pardir, 'BoostingMonocularDepth')}"
@@ -349,7 +340,18 @@ def boosting_monodepth(rgb_image_data_list):
 
     whole_size_threshold = 3000  # R_max from the paper
     GPU_threshold = 1600 - 32  # Limit for the GPU (NVIDIA RTX 2080), can be adjusted
-    opt = TestOptions().parse()
+    opt_pix2pix = Object()
+    opt_pix2pix.input_nc = 2
+    opt_pix2pix.output_nc = 1
+
+    # Handle pix2pix parser
+    opt = TestOptions()
+    parser_pix2pix = argparse.ArgumentParser()
+    parser_pix2pix = opt.initialize(parser_pix2pix)
+    opt = parser_pix2pix.parse_known_args()[0]
+    opt.isTrain = False
+    opt.gpu_ids = [0]
+
     BoostingMonocularDepth.run.pix2pixmodel = Pix2Pix4DepthModel(opt)
     BoostingMonocularDepth.run.pix2pixmodel.save_dir = os.path.join(boost_path, "pix2pix", "checkpoints", "mergemodel")
     BoostingMonocularDepth.run.pix2pixmodel.load_networks('latest')

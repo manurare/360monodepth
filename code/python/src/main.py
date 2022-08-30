@@ -97,7 +97,7 @@ class Options():
         parser.add_argument("--padding", type=float, default="0.3")
         parser.add_argument("--multires_levels", type=int, default=1, help="Levels of multi-resolution pyramid. If > 1"
                                                                            "then --grid_size is the lowest resolution")
-        parser.add_argument("--persp_monodepth", type=str, default="boost", choices=["midas2", "midas3", "boost"])
+        parser.add_argument("--persp_monodepth", type=str, default="midas2", choices=["midas2", "midas3", "boost"])
         parser.add_argument('--depthalignstep', type=int, nargs='+', default=[1, 2, 3, 4])
         parser.add_argument("--rm_debug_folder", default=True, action='store_false')
         parser.add_argument("--intermediate_data", default=False, action='store_true', help="save intermediate data"
