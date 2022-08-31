@@ -305,13 +305,15 @@ def boosting_monodepth(rgb_image_data_list):
     class Object(object):
         pass
 
+    # Settings from the official repo
     option = Object()
     option.R0 = False
     option.R20 = False
+    option.Final = True
     option.output_resolution = 1
     option.pix2pixsize = 1024
     option.depthNet = 0
-    option.max_res = np.Inf
+    option.max_res = 2000
 
     currfile_dir = os.path.dirname(__file__)
     boost_path = f"{os.path.join(currfile_dir, os.pardir, os.pardir, os.pardir, os.pardir, 'BoostingMonocularDepth')}"
@@ -340,9 +342,6 @@ def boosting_monodepth(rgb_image_data_list):
 
     whole_size_threshold = 3000  # R_max from the paper
     GPU_threshold = 1600 - 32  # Limit for the GPU (NVIDIA RTX 2080), can be adjusted
-    opt_pix2pix = Object()
-    opt_pix2pix.input_nc = 2
-    opt_pix2pix.output_nc = 1
 
     # Handle pix2pix parser
     opt = TestOptions()
