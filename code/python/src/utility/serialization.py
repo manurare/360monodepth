@@ -324,6 +324,7 @@ def load_dispmapalign_intermediate_data(filepath, file_format):
 
 
 def save_metrics(output_file, pred_metrics, times, times_header, idx, blending_methods):
+    return
     if idx == 0:
         with open(output_file, "w") as f:
             f.write(','.join(list(pred_metrics[0].keys()) + times_header))
@@ -354,9 +355,15 @@ def save_predictions(output_folder, erp_gt_depthmap, erp_rgb_image_data, estimat
 
         plt.imsave(os.path.join(output_folder, "{:03}_360monodepth_{}_{}.png".format(idx, persp_monodepth, key)),
                    pred, cmap="turbo", vmin=vmin, vmax=vmax)
+        
+        # output raw byte buffer
+        pred_bytes = pred.astype(np.float32).tobytes()
+        with open(os.path.join(output_folder, "{:03}_360monodepth_{}_{}.raw".format(idx, persp_monodepth, key)), "wb") as f:
+            f.write(pred_bytes)
 
-    plt.imsave(os.path.join(output_folder, "{:03}_GT.png".format(idx)),
-               erp_gt_depthmap, vmin=vmin, vmax=vmax, cmap="turbo")
+
+    # plt.imsave(os.path.join(output_folder, "{:03}_GT.png".format(idx)),
+    #          erp_gt_depthmap, vmin=vmin, vmax=vmax, cmap="turbo")
     plt.imsave(os.path.join(output_folder, "{:03}_rgb.png".format(idx)), erp_rgb_image_data)
 
     # metrics.visualize_error_maps(pred, erp_gt_depthmap, mask, idx=idx,

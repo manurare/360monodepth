@@ -381,6 +381,7 @@ def depthmap_estimation(erp_rgb_image_data, fnc, opt, blendIt, idx=1):
 
         toc = time.perf_counter()
         log.info(f"Blender to ERP image in {toc - tic:0.4f} seconds.")
+        log.info(f"Blend list {len(opt.subimage_available_list)}")
         total_time += toc - tic
         times.append(toc-tic)
 
@@ -413,6 +414,8 @@ def monodepth_360(opt):
     output_folder = os.path.join(Path(MAIN_DATA_DIR).parent.absolute(), "results/{}".format(opt.expname))
     output_results_file = os.path.join(output_folder, "{}.txt".format(opt.expname))
     Path(output_folder).mkdir(exist_ok=True, parents=True)
+
+    print(f"Output folder: {output_folder} {output_results_file}")
 
     with open(opt.data_fns, 'r') as f:
         data_fns = f.readlines()

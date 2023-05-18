@@ -34,7 +34,7 @@ Dependencies for python are in ```code/python/requirements.txt```
 We recommend Docker to run 360MonoDepth to avoid problems with dependencies.
 ```
 docker build -t 360monodepth .
-docker run -it --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 360monodepth sh -c "cd /monodepth/code/python/src; python3 main.py --expname test_experiment --blending_method all --grid_size 8x7"
+docker run -it -v /home/a/ai-cluster/360monodepth/data:/monodepth/results/test_experiment 360monodepth sh -c "cd /monodepth/code/python/src; python3 main.py --expname test_experiment --grid_size 8x7 --data /monodepth/results/test_experiment/game.txt"
 ```
 
 #### Without Docker 

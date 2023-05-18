@@ -5,25 +5,31 @@
 FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
 # FROM alpine:3.4
 
-#-- setup building environment 
+ARG DEBIAN_FRONTEND=noninteractive
+
+#-- setup building environment
+# RUN apt-get update
+# RUN apt-get install -y software-properties-common
+# RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update
 
 # 1) set up cpp code building dependent 3rd party libraries
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/London
 
+# python3.9
 RUN apt-get install --no-install-recommends \
         build-essential \
-         cmake \
-         libeigen3-dev \
-         libgoogle-glog-dev \
-         libgtest-dev \
-         libopencv-dev \
-         libceres-dev \
-         python3-pybind11 \
-         git \
-         wget \
-         libboost1.71-dev  -y
+        cmake \
+        libeigen3-dev \
+        libgoogle-glog-dev \
+        libgtest-dev \
+        libopencv-dev \
+        libceres-dev \
+        python3-pybind11 \
+        git \
+        wget \
+        libboost1.71-dev  -y
 
 # 2) set up python module's build environment
 RUN apt install --no-install-recommends \
@@ -36,12 +42,12 @@ WORKDIR "/monodepth"
 COPY . ./
 
 # Setup BoostingMonocularDepth
-RUN git submodule update --init
+# RUN git submodule update --init
 RUN cd ./BoostingMonocularDepth/pix2pix/ && mkdir -p checkpoints/mergemodel
 # Midas weights
-RUN wget https://github.com/isl-org/MiDaS/releases/download/v2_1/model-f6b98070.pt -O ./BoostingMonocularDepth/midas/model.pt
+# RUN wget https://github.com/isl-org/MiDaS/releases/download/v2_1/model-f6b98070.pt -O ./BoostingMonocularDepth/midas/model.pt
 # Merge net weights
-RUN wget -P ./BoostingMonocularDepth/pix2pix/checkpoints/mergemodel https://www.sfu.ca/~yagiz/CVPR21/latest_net_G.pth
+# RUN wget -P ./BoostingMonocularDepth/pix2pix/checkpoints/mergemodel https://www.sfu.ca/~yagiz/CVPR21/latest_net_G.pth
 
 RUN pip3 install -r ./code/python/requirements.txt
 
