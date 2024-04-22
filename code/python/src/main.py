@@ -458,7 +458,10 @@ def monodepth_360(opt):
 
             line = line.splitlines()[0].split(" ")
             erp_image_filename = line[0]
-            erp_gtdepth_filename = line[1] if line[1] != 'None' else ""
+            if len(line) > 1:
+                erp_gtdepth_filename = line[1] if line[1] != 'None' else ""
+            else:
+                erp_gtdepth_filename = ""
 
             if "matterport" in erp_image_filename:
                 opt.dataset_matterport_hexagon_mask_enable = True
