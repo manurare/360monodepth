@@ -280,7 +280,7 @@ def erp2ico_image(erp_image, tangent_image_width, padding_size=0.0, full_face_im
         gnom_range_xv, gnom_range_yv = np.meshgrid(gnom_range_x, gnom_range_y)
 
         # the tangent triangle points coordinate in tangent image
-        inside_list = np.full(gnom_range_xv.shape[:2], True, dtype=np.bool)
+        inside_list = np.full(gnom_range_xv.shape[:2], True, dtype=bool)
         if not full_face_image:
             gnom_range_xyv = np.stack((gnom_range_xv.flatten(), gnom_range_yv.flatten()), axis=1)
             pixel_eps = (gnomonic_x_max - gnomonic_x_min) / (tangent_image_width)
@@ -433,7 +433,7 @@ def ico2erp_image(tangent_images, erp_image_height, padding_size=0.0, blender_me
                                                        0.0, tangent_image_width, tangent_image_height, tangent_gnomonic_range)
 
             for channel in range(0, images_channels_number):
-                erp_image[triangle_yv[available_pixels_list].astype(np.int), triangle_xv[available_pixels_list].astype(np.int), channel] = \
+                erp_image[triangle_yv[available_pixels_list].astype(int), triangle_xv[available_pixels_list].astype(int), channel] = \
                     ndimage.map_coordinates(tangent_images_subimage[:, :, channel], [tangent_yv, tangent_xv], order=1, mode='constant', cval=255)
         elif blender_method == "mean":
             triangle_points_tangent = [[gnomonic_x_min, gnomonic_y_max],
@@ -447,14 +447,14 @@ def ico2erp_image(tangent_images, erp_image_height, padding_size=0.0, blender_me
                                                        0.0, tangent_image_width, tangent_image_height, tangent_gnomonic_range)
             for channel in range(0, images_channels_number):
                 erp_face_image = ndimage.map_coordinates(tangent_images_subimage[:, :, channel], [tangent_yv, tangent_xv], order=1, mode='constant', cval=255)
-                erp_image[triangle_yv[available_pixels_list].astype(np.int), triangle_xv[available_pixels_list].astype(np.int), channel] += erp_face_image.astype(np.float64)
+                erp_image[triangle_yv[available_pixels_list].astype(int), triangle_xv[available_pixels_list].astype(int), channel] += erp_face_image.astype(np.float64)
 
             face_weight_mat = np.ones(erp_face_image.shape, np.float64)
             erp_weight_mat[triangle_yv[available_pixels_list].astype(np.int64), triangle_xv[available_pixels_list].astype(np.int64)] += face_weight_mat
 
     # compute the final optical flow base on weight
     if blender_method == "mean":
-        # erp_flow_weight_mat = np.full(erp_flow_weight_mat.shape, erp_flow_weight_mat.max(), np.float) # debug
+        # erp_flow_weight_mat = np.full(erp_flow_weight_mat.shape, erp_flow_weight_mat.max(), float) # debug
         non_zero_weight_list = erp_weight_mat != 0
         if not np.all(non_zero_weight_list):
             log.warn("the optical flow weight matrix contain 0.")

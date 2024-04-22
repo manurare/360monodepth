@@ -83,7 +83,7 @@ def draw_corresponding(src_image_data, tar_image_data, pixel_corresponding_array
 
     # 2) warp src image
     src_warp_image = np.zeros(src_image_data.shape, src_image_data.dtype)
-    pixel_corresponding_array_temp = pixel_corresponding_array.astype(np.int)
+    pixel_corresponding_array_temp = pixel_corresponding_array.astype(int)
     src_y = pixel_corresponding_array_temp[:, 0]
     src_x = pixel_corresponding_array_temp[:, 1]
     tar_y = pixel_corresponding_array_temp[:, 2]
@@ -328,7 +328,7 @@ def erp_ico_proj(erp_image, padding_size, tangent_image_width, corr_downsample_f
             # down-sample the pixel corresponding relationship
             if corr_downsample_factor != 1.0 and pixels_corr_dict_subimage[subimage_index_tar] is not None:
                 corr_number = pixels_corr_dict_subimage[subimage_index_tar].shape[0]
-                corr_index = np.linspace(0, corr_number -1, num = int(corr_number * corr_downsample_factor)).astype(np.int)
+                corr_index = np.linspace(0, corr_number -1, num = int(corr_number * corr_downsample_factor)).astype(int)
                 corr_index = np.unique(corr_index)
                 pixels_corr_dict_subimage[subimage_index_tar]  = pixels_corr_dict_subimage[subimage_index_tar][corr_index,:]
             
@@ -410,7 +410,7 @@ def erp_ico_draw_corresponding(src_image_data, tar_image_data, pixel_correspondi
 
     # 1) warp src image
     src_warp = np.zeros(src_image_data_np.shape, src_image_data_np.dtype)
-    pixel_corresponding_array_temp = pixel_corresponding_array.astype(np.int)
+    pixel_corresponding_array_temp = pixel_corresponding_array.astype(int)
     src_y = pixel_corresponding_array_temp[:, 0]
     src_x = pixel_corresponding_array_temp[:, 1]
     tar_y = pixel_corresponding_array_temp[:, 2]

@@ -107,7 +107,7 @@ def depthmap2pointclouds_perspective(depth_map, rgb_image, cam_int_param, output
     x_list = np.linspace(0, image_width, image_width, endpoint=False)
     y_list = np.linspace(0, image_height, image_height, endpoint=False)
     grid_x, grid_y = np.meshgrid(x_list, y_list)
-    gird_z = np.ones(grid_x.shape, np.float)
+    gird_z = np.ones(grid_x.shape, float)
     points_2d_pixel = np.stack((grid_x.ravel(), grid_y.ravel(), gird_z.ravel()), axis=1)
     points_2d_pixel = np.multiply(points_2d_pixel.T, depth_map.ravel())
     points_3d_pixel = np.linalg.inv(cam_int_param) @ points_2d_pixel

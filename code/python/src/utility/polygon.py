@@ -85,7 +85,7 @@ def enlarge_polygon(old_points, offset):
 
         # 1) Move the points by the offset.
         # the points of line parallel to ij
-        v1 = np.array([old_points[j][0] - old_points[i][0], old_points[j][1] - old_points[i][1]], np.float)
+        v1 = np.array([old_points[j][0] - old_points[i][0], old_points[j][1] - old_points[i][1]], float)
         norm = np.linalg.norm(v1)
         v1 = v1 / norm * offset
         n1 = [-v1[1], v1[0]]
@@ -93,7 +93,7 @@ def enlarge_polygon(old_points, offset):
         pij2 = [old_points[j][0] + n1[0], old_points[j][1] + n1[1]]
 
         # the points of line parallel to jk
-        v2 = np.array([old_points[k][0] - old_points[j][0], old_points[k][1] - old_points[j][1]], np.float)
+        v2 = np.array([old_points[k][0] - old_points[j][0], old_points[k][1] - old_points[j][1]], float)
         norm = np.linalg.norm(v2)
         v2 = v2 / norm * offset
         n2 = [-v2[1], v2[0]]

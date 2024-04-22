@@ -112,7 +112,7 @@ def image_save(image_data, image_file_path):
     """
     # 0) convert the datatype
     image = None
-    if image_data.dtype in [np.float, np.int64, np.int]:
+    if image_data.dtype in [float, np.int64, int]:
         print("saved image array type is {}, converting to uint8".format(image_data.dtype))
         image = image_data.astype(np.uint8)
     else:

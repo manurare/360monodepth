@@ -757,7 +757,7 @@ def dispmap_normalize(dispmap, method = "", mask = None):
     :rtype: numpy
     """
     if mask is None:
-        mask = np.ones_like(dispmap, dtype= np.bool)
+        mask = np.ones_like(dispmap, dtype= bool)
 
     dispmap_norm = None
     if method == "naive":

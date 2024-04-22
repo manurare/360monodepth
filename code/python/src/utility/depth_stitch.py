@@ -57,8 +57,8 @@ def stitch_depth_subimage(depth_data_list, image_param_list, fisheye_model):
     fisheye_image_height = fisheye_model["intrinsics"]["image_size"][0]
     fisheye_image_width = fisheye_model["intrinsics"]["image_size"][1]
 
-    fisheye_depth = np.zeros((fisheye_image_height, fisheye_image_width), np.float)
-    fisheye_image_weight = np.zeros((fisheye_image_height, fisheye_image_width), np.float)
+    fisheye_depth = np.zeros((fisheye_image_height, fisheye_image_width), float)
+    fisheye_image_weight = np.zeros((fisheye_image_height, fisheye_image_width), float)
 
     # project the pinhole image to 3D
     x_list = np.linspace(0, fisheye_image_width, fisheye_image_width, endpoint=False)
@@ -131,7 +131,7 @@ def find_corresponding(src_image, src_param, tar_image, tar_param, fisheye_model
     src_image_u_list = np.linspace(0, src_image_width, src_image_width, endpoint=False)  # x
     src_image_v_list = np.linspace(0, src_image_height, src_image_height, endpoint=False)  # y
     src_image_grid_u, src_image_grid_v = np.meshgrid(src_image_u_list, src_image_v_list)
-    src_image_grid_z = np.ones(src_image_grid_u.shape, np.float)
+    src_image_grid_z = np.ones(src_image_grid_u.shape, float)
     src_image_2d_points = np.stack((src_image_grid_u.ravel(), src_image_grid_v.ravel(), src_image_grid_z.ravel()), axis=1)
 
     # project the pinhole image to world coords (spherical 3D points)
@@ -165,8 +165,8 @@ def find_corresponding(src_image, src_param, tar_image, tar_param, fisheye_model
     if src_image_2d_points_available.shape[0] == 0:
         log.debug("the do not have overlap between two images.")
     else:
-        src_image_avail_pixel_data = src_image[src_image_2d_points_available.astype(np.int)]
-        tar_image_avail_pixel_data = tar_image[tar_image_2d_points_available.astype(np.int)]
+        src_image_avail_pixel_data = src_image[src_image_2d_points_available.astype(int)]
+        tar_image_avail_pixel_data = tar_image[tar_image_2d_points_available.astype(int)]
         rms = np.sqrt(np.mean((src_image_avail_pixel_data - tar_image_avail_pixel_data) ** 2))
         log.debug("The corresponding pixel rms is {}".format(rms))
 
