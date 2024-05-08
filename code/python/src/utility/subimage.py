@@ -136,6 +136,7 @@ def erp_ico_cam_intrparams(image_width, padding_size=0):
 
     # use tangent plane
     tangent_points_x_min = np.amin(np.array(triangle_points_tangent)[:, 0])
+    tangent_points_x_max = np.amax(np.array(triangle_points_tangent)[:, 0])
     tangent_points_y_min = np.amin(np.array(triangle_points_tangent)[:, 1])
     tangent_points_y_max = np.amax(np.array(triangle_points_tangent)[:, 1])
     fov_v = np.abs(np.arctan2(tangent_points_y_min, 1.0)) + np.abs(np.arctan2(tangent_points_y_max, 1.0))
@@ -144,27 +145,28 @@ def erp_ico_cam_intrparams(image_width, padding_size=0):
     log.debug("Pin-hole camera fov_h: {}, fov_v: {}".format(np.degrees(fov_h), np.degrees(fov_v)))
 
     # image aspect ratio, the triangle is equilateral triangle
-    image_height = 0.5 * image_width / np.tan(np.radians(30.0))
-    fx = 0.5 * image_width / np.tan(fov_h * 0.5)
-    fy = 0.5 * image_height / np.tan(fov_v * 0.5)
+    image_height = image_width  # 0.5 * image_width / np.tan(np.radians(30.0))
+    fx = image_width / np.abs(tangent_points_x_max - tangent_points_x_min)  # 0.5 * image_width / np.tan(fov_h * 0.5)
+    fy = fx  # 0.5 * image_height / np.tan(fov_v * 0.5)
 
-    cx = (image_width - 1) / 2.0
+    cx = image_width / 2.0
+    cy = image_height / 2.0
     # invert and upright triangle cy
-    cy_invert = 0.5 * (image_width - 1.0) * np.tan(np.radians(30.0)) + 10.0
-    cy_up = 0.5 * (image_width - 1.0) / np.sin(np.radians(60.0)) + 10.0
+    # cy_invert = 0.5 * (image_width - 1.0) * np.tan(np.radians(30.0)) + 10.0
+    # cy_up = 0.5 * (image_width - 1.0) / np.sin(np.radians(60.0)) + 10.0
 
     subimage_cam_param_list = []
     for index in range(0, 20):
         # intrinsic parameters
-        cy = None
-        if 0 <= index <= 4:
-            cy = cy_up
-        elif 5 <= index <= 9:
-            cy = cy_invert
-        elif 10 <= index <= 14:
-            cy = cy_up
-        else:
-            cy = cy_invert
+        # cy = None
+        # if 0 <= index <= 4:
+        #     cy = cy_up
+        # elif 5 <= index <= 9:
+        #     cy = cy_invert
+        # elif 10 <= index <= 14:
+        #     cy = cy_up
+        # else:
+        #     cy = cy_invert
 
         intrinsic_matrix = np.array([[fx, 0, cx],
                                      [0, fy, cy],
