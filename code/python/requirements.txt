@@ -6,4 +6,4 @@ opencv-python>=4.5.1.48
 torch>=1.8.1
 torchvision>=0.9.1
 wheel>=0.36.2
-timm>=0.4.12
+timm==0.6.7
