@@ -1,0 +1,17 @@
+services:
+  360monodepth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+    volumes:
+      - ./data:/monodepth/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

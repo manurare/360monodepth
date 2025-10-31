@@ -2,7 +2,7 @@
 # create docker container with image: docker run --name=mzy22_monodepth -e COLUMNS=300 --mount type=bind,source="$(pwd)",target=/monodepth_dev -it --gpus all mzy22/monodepth:v1.0
 
 # ubuntu 20.04/cuda
-FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
+FROM nvidia/cuda:11.4.3-devel-ubuntu20.04
 # FROM alpine:3.4
 
 #-- setup building environment 
@@ -23,7 +23,8 @@ RUN apt-get install --no-install-recommends \
          python3-pybind11 \
          git \
          wget \
-         libboost1.71-dev  -y
+         libboost1.71-dev \
+         libc6 -y
 
 # 2) set up python module's build environment
 RUN apt install --no-install-recommends \
@@ -51,3 +52,6 @@ RUN cd ./code/cpp && mkdir build && cd build && cmake ..  -DCMAKE_BUILD_TYPE=Rel
 
 # 2) build & install python module
 RUN cd ./code/cpp/python/ && python3 ./setup.py build && python3 ./setup.py bdist_wheel && pip3 install dist/instaOmniDepth-0.1.0-cp38-cp38-linux_x86_64.whl
+
+# Download necessary models by running test_experiment
+RUN cd /monodepth/code/python/src && python3 main.py --expname test_experiment --blending_method all --grid_size 8x7

@@ -37,6 +37,13 @@ docker build -t 360monodepth .
 docker run -it --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 360monodepth sh -c "cd /monodepth/code/python/src; python3 main.py --expname test_experiment --blending_method all --grid_size 8x7"
 ```
 
+Or you can run with Docker Compose.
+```
+docker compose run --rm --build 360monodepth
+cd /monodepth/code/python/src
+python3 main.py --expname test_experiment --blending_method all --grid_size 8x7
+```
+
 #### Without Docker 
 1. We need to create a conda environment with python 3.8 and build the C++ targets
 
